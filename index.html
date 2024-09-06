@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine persönliche Website</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('static/night.png');
+            background-size: cover;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        header {
+            color: #fff;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            padding: 10px 0;
+        }
+
+        nav a {
+            color: #fff;
+            padding: 10px 15px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: bold;
+            position: relative;
+            margin: 0 10px;
+        }
+
+        nav a:hover {
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        h1, h2 {
+            color: #007bff;
+        }
+
+        .section-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+            display: none; /* Standardmäßig versteckt */
+        }
+
+        .section-box.active {
+            display: block; /* Wird angezeigt, wenn aktiv */
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            position: relative;
+            margin-top: 40px;
+            border-radius: 8px;
+        }
+
+        #resourcesTab {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+
+        #resourcesTab img {
+            width: 32px;
+            height: 32px;
+            margin-right: 8px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Willkommen auf meiner Website!</h1>
+    </header>
+    <nav>
+        <a href="#about" onclick="showSection('about')">Über mich</a>
+        <a href="#minecraft" onclick="showSection('minecraft')">Minecraft Server</a>
+        <a href="#programming" onclick="showSection('programming')">Programmieren lernen</a>
+        <a href="#resources" onclick="showSection('resources')">Ressourcen</a>
+    </nav>
+    <div class="container">
+        <section id="about" class="section-box">
+            <h2>Über mich</h2>
+            <p>Hallo, mein Name ist [Dein Name]. Ich bin leidenschaftlicher Minecraft-Spieler und lerne gerade Programmieren. Auf dieser Website möchte ich meine Projekte und Interessen vorstellen.</p>
+        </section>
+
+        <section id="minecraft" class="section-box">
+            <h2>Mein Minecraft Server</h2>
+            <p>Ich betreibe einen Minecraft-Server, der sich auf [Server-Thema] konzentriert. Du kannst dem Server beitreten, indem du die IP-Adresse [Server-IP] verwendest. Ich freue mich, dich dort zu sehen! Du willst hosten wie wir? Kein Problem! Als erstes Solltest du dir einen Home-Server oder einen so gennanten Thin-Client besorgen. Der nächste Schritt ist, dass du Linux (wir empfehlen Ubuntu) darauf installierst. Als nächster Schritt kommt dann wie ihr hosten wollt; wir haben uns für Pufferpanel entschieden (ihr könnt aber auch andere Panels wie Pterodactyl benutzen), und das wars; jetzt nur noch den Server aufsetzen und das wars! </p>
+			</section>
+
+        <section id="programming" class="section-box">
+            <h2>Programmieren lernen</h2>
+            <p>Derzeit lerne ich Programmieren und arbeite an verschiedenen Projekten. Ich beschäftige mich mit [Programmiersprachen oder Technologien], um meine Fähigkeiten zu erweitern und coole Projekte zu erstellen.</p>
+        </section>
+
+        <section id="resources" class="section-box">
+            <h2>Ressourcennutzung</h2>
+            <button id="checkButton" onclick="startFetching()">Überprüfen</button>
+            <div id="cpuUsage">CPU-Nutzung: Noch nicht überprüft</div>
+            <div id="ramUsage">RAM-Nutzung: Noch nicht überprüft</div>
+            <div class="chart-container">
+                <canvas id="resourceChart"></canvas>
+            </div>
+            <div id="specsInfo">
+                <h3>System-Spezifikationen:</h3>
+                <p>CPU: Intel Pentium Gold G5400T @ 3,1 GHz</p>
+                <p>RAM: 8 GB DDR4</p>
+                <p>Speicher: 250 GB SSD</p>
+                <p>Betriebssystem: Windows 11 Professional</p>
+            </div>
+        </section>
+    </div>
+    <footer>
+        <p>&copy; 2024 [Dein Name]. Alle Rechte vorbehalten.</p>
+    </footer>
+
+    <div id="resourcesTab">
+        <img src="static/server-icon.png" alt="Server Icon">
+        <div id="playerCountTab">Spieleranzahl: Noch nicht überprüft</div>
+    </div>
+
+    <script>
+        let intervalId = null;
+        let cpuData = [];
+        let ramData = [];
+        let labels = [];
+        const maxDataPoints = 20; // max 20 Datenpunkte für 1 Stunde bei 3,5s Intervall
+        let chart;
+
+        function showSection(sectionId) {
+            // Verstecke alle Abschnitte
+            document.querySelectorAll('.section-box').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Zeige den ausgewählten Abschnitt
+            const section = document.getElementById(sectionId);
+            section.classList.add('active');
+
+            // Spezifische Aktionen für den Ressourcen-Tab
+            if (sectionId === 'resources') {
+                // Setze den Button in den Initialzustand zurück
+                document.getElementById('checkButton').disabled = false;
+                document.getElementById('cpuUsage').innerText = 'CPU-Nutzung: Noch nicht überprüft';
+                document.getElementById('ramUsage').innerText = 'RAM-Nutzung: Noch nicht überprüft';
+                document.getElementById('playerCountTab').innerText = 'Spieleranzahl: Noch nicht überprüft';
+
+                // Stoppe das Intervall, wenn der Tab gewechselt wird
+                stopFetching();
+
+                // Erstelle das Diagramm neu
+                if (chart) {
+                    chart.destroy();
+                }
+                createChart();
+            }
+        }
+
+        function fetchResources() {
+            // Beispielhafte Werte
+            const cpuUsage = Math.floor(Math.random() * 100);
+            const ramUsage = Math.floor(Math.random() * 100);
+
+            document.getElementById('cpuUsage').innerText = 'CPU-Nutzung: ' + cpuUsage + '%';
+            document.getElementById('ramUsage').innerText = 'RAM-Nutzung: ' + ramUsage + '%';
+
+            // Füge die neuen Werte zum Diagramm hinzu
+            addDataPoint(cpuUsage, ramUsage);
+        }
+
+        function fetchPlayerCount() {
+            fetch('https://api.mcsrvstat.us/3/dserver.hopto.org')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('playerCountTab').innerText = 'Spieleranzahl: ' + data.players.online;
+                })
+                .catch(error => {
+                    console.error('Fehler beim Abrufen der Spieleranzahl:', error);
+                    document.getElementById('playerCountTab').innerText = 'Spieleranzahl: Fehler beim Abrufen';
+                });
+        }
+
+        function startFetching() {
+            // Sofortige Ressourcen- und Spieleranzahlabfrage
+            fetchResources();
+            fetchPlayerCount();
+
+            // Starte das Intervall für die regelmäßige Aktualisierung
+            intervalId = setInterval(() => {
+                fetchResources();
+                fetchPlayerCount();
+            }, 1700);
+
+            // Deaktiviere den Button nach dem Klick
+            document.getElementById('checkButton').disabled = true;
+        }
+
+        function stopFetching() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+        }
+
+        function createChart() {
+            const ctx = document.getElementById('resourceChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'CPU-Nutzung (%)',
+                            data: cpuData,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'RAM-Nutzung (%)',
+                            data: ramData,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            fill: false,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Zeit'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Nutzung (%)'
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function addDataPoint(cpuUsage, ramUsage) {
+            const now = new Date();
+            const timeLabel = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+
+            if (labels.length >= maxDataPoints) {
+                labels.shift();
+                cpuData.shift();
+                ramData.shift();
+            }
+
+            labels.push(timeLabel);
+            cpuData.push(cpuUsage);
+            ramData.push(ramUsage);
+
+            chart.update();
+        }
+    </script>
+</body>
+</html>
